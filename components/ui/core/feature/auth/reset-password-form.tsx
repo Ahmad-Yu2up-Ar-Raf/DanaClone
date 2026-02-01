@@ -6,52 +6,76 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/fragments/shadcn-ui/card';
-import { Input } from '@/components/ui/fragments/shadcn-ui/input';
-import { Label } from '@/components/ui/fragments/shadcn-ui/label';
+import { GroupedInput, GroupedInputItem } from '@/components/ui/fragments/custom-ui/form/input-form';
 import { Text } from '@/components/ui/fragments/shadcn-ui/text';
+import { useToast } from '@/components/ui/fragments/shadcn-ui/toast';
 import { useSignIn } from '@clerk/clerk-expo';
-import { router } from 'expo-router';
+import { Hash, Lock } from 'lucide-react-native';
 import * as React from 'react';
-import { TextInput, View } from 'react-native';
+import { View } from 'react-native';
 
 export function ResetPasswordForm() {
   const { signIn, setActive, isLoaded } = useSignIn();
-  const [password, setPassword] = React.useState('');
-  const [code, setCode] = React.useState('');
-  const codeInputRef = React.useRef<TextInput>(null);
-  const [error, setError] = React.useState({ code: '', password: '' });
+  const { success, error: showError } = useToast();
+
+  const [formData, setFormData] = React.useState({
+    password: '',
+    code: '',
+  });
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+
+    if (!formData.code) {
+      newErrors.code = 'Verification code is required';
+    } else if (formData.code.length < 6) {
+      newErrors.code = 'Code must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   async function onSubmit() {
-    if (!isLoaded) {
+    if (!validateForm()) {
+      showError('Validation Error', 'Please check your input and try again.');
       return;
     }
+
+    if (!isLoaded) return;
+
     try {
       const result = await signIn?.attemptFirstFactor({
         strategy: 'reset_password_email_code',
-        code,
-        password,
+        code: formData.code,
+        password: formData.password,
       });
 
       if (result.status === 'complete') {
-        // Set the active session to
-        // the newly created session (user is now signed in)
         setActive({ session: result.createdSessionId });
+        success('Password Reset', 'Your password has been successfully reset.');
         return;
       }
-      // TODO: Handle other statuses
     } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
         const isPasswordMessage = err.message.toLowerCase().includes('password');
-        setError({ code: '', password: isPasswordMessage ? err.message : '' });
+        setErrors({
+          code: '',
+          password: isPasswordMessage ? err.message : '',
+        });
+        showError('Reset Failed', err.message);
         return;
       }
       console.error(JSON.stringify(err, null, 2));
+      showError('Error', 'An unexpected error occurred. Please try again.');
     }
-  }
-
-  function onPasswordSubmitEditing() {
-    codeInputRef.current?.focus();
   }
 
   return (
@@ -65,38 +89,32 @@ export function ResetPasswordForm() {
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
-            <View className="gap-1.5">
-              <View className="flex-row items-center">
-                <Label htmlFor="password">New password</Label>
-              </View>
-              <Input
-                id="password"
+            <GroupedInput>
+              <GroupedInputItem
+                label="New Password"
+                placeholder="••••••••"
+                icon={Lock}
+                value={formData.password}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, password: text }))}
+                error={errors.password}
                 secureTextEntry
-                onChangeText={setPassword}
                 returnKeyType="next"
-                submitBehavior="submit"
-                onSubmitEditing={onPasswordSubmitEditing}
               />
-              {error.password ? (
-                <Text className="text-sm font-medium text-destructive">{error.password}</Text>
-              ) : null}
-            </View>
-            <View className="gap-1.5">
-              <Label htmlFor="code">Verification code</Label>
-              <Input
-                id="code"
-                autoCapitalize="none"
-                onChangeText={setCode}
-                returnKeyType="send"
+              <GroupedInputItem
+                label="Code"
+                placeholder="123456"
+                icon={Hash}
+                value={formData.code}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, code: text }))}
+                error={errors.code}
                 keyboardType="numeric"
                 autoComplete="sms-otp"
                 textContentType="oneTimeCode"
+                returnKeyType="send"
                 onSubmitEditing={onSubmit}
               />
-              {error.code ? (
-                <Text className="text-sm font-medium text-destructive">{error.code}</Text>
-              ) : null}
-            </View>
+            </GroupedInput>
+
             <Button className="w-full" onPress={onSubmit}>
               <Text>Reset Password</Text>
             </Button>

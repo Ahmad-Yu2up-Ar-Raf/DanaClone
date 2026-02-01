@@ -3,8 +3,8 @@ import { View, Text } from 'react-native';
 
 const Index = () => {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text className=' text-accent-foreground'>News screen</Text>
+    <View className="flex-1 items-center justify-center">
+      <Text className="text-accent-foreground">News screen</Text>
     </View>
   );
 };

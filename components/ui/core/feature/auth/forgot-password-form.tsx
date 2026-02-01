@@ -6,29 +6,45 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/fragments/shadcn-ui/card';
-import { Input } from '@/components/ui/fragments/shadcn-ui/input';
-import { Label } from '@/components/ui/fragments/shadcn-ui/label';
+import { GroupedInput, GroupedInputItem } from '@/components/ui/fragments/custom-ui/form/input-form';
 import { Text } from '@/components/ui/fragments/shadcn-ui/text';
+import { useToast } from '@/components/ui/fragments/shadcn-ui/toast';
 import { useSignIn } from '@clerk/clerk-expo';
-import { router } from 'expo-router';
-import { useLocalSearchParams } from 'expo-router/build/hooks';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Mail } from 'lucide-react-native';
 import * as React from 'react';
 import { View } from 'react-native';
 
 export function ForgotPasswordForm() {
   const { email: emailParam = '' } = useLocalSearchParams<{ email?: string }>();
-  const [email, setEmail] = React.useState(emailParam);
   const { signIn, isLoaded } = useSignIn();
-  const [error, setError] = React.useState<{ email?: string; password?: string }>({});
+  const { success, error: showError } = useToast();
+
+  const [email, setEmail] = React.useState(emailParam);
+  const [error, setError] = React.useState('');
+
+  const validateForm = () => {
+    if (!email) {
+      setError('Email is required');
+      return false;
+    }
+
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setError('Invalid email format');
+      return false;
+    }
+
+    setError('');
+    return true;
+  };
 
   const onSubmit = async () => {
-    if (!email) {
-      setError({ email: 'Email is required' });
+    if (!validateForm()) {
+      showError('Validation Error', 'Please enter a valid email address.');
       return;
     }
-    if (!isLoaded) {
-      return;
-    }
+
+    if (!isLoaded) return;
 
     try {
       await signIn.create({
@@ -36,14 +52,16 @@ export function ForgotPasswordForm() {
         identifier: email,
       });
 
+      success('Code Sent', 'Please check your email for the reset code.');
       router.push(`/(auth)/reset-password?email=${email}`);
     } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
-        setError({ email: err.message });
+        setError(err.message);
+        showError('Reset Failed', err.message);
         return;
       }
       console.error(JSON.stringify(err, null, 2));
+      showError('Error', 'An unexpected error occurred. Please try again.');
     }
   };
 
@@ -58,23 +76,22 @@ export function ForgotPasswordForm() {
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
-            <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                defaultValue={email}
+            <GroupedInput>
+              <GroupedInputItem
+                label="Email"
                 placeholder="m@example.com"
+                icon={Mail}
+                value={email}
+                onChangeText={setEmail}
+                error={error}
                 keyboardType="email-address"
                 autoComplete="email"
                 autoCapitalize="none"
-                onChangeText={setEmail}
-                onSubmitEditing={onSubmit}
                 returnKeyType="send"
+                onSubmitEditing={onSubmit}
               />
-              {error.email ? (
-                <Text className="text-sm font-medium text-destructive">{error.email}</Text>
-              ) : null}
-            </View>
+            </GroupedInput>
+
             <Button className="w-full" onPress={onSubmit}>
               <Text>Reset your password</Text>
             </Button>

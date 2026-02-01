@@ -6,51 +6,70 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/fragments/shadcn-ui/card';
-import { Input } from '@/components/ui/fragments/shadcn-ui/input';
-import { Label } from '@/components/ui/fragments/shadcn-ui/label';
+import { GroupedInput, GroupedInputItem } from '@/components/ui/fragments/custom-ui/form/input-form';
 import { Text } from '@/components/ui/fragments/shadcn-ui/text';
+import { useToast } from '@/components/ui/fragments/shadcn-ui/toast';
 import { useSignUp } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Hash } from 'lucide-react-native';
 import * as React from 'react';
 import { type TextStyle, View } from 'react-native';
 
 const RESEND_CODE_INTERVAL_SECONDS = 30;
-
 const TABULAR_NUMBERS_STYLE: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export function VerifyEmailForm() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { email = '' } = useLocalSearchParams<{ email?: string }>();
+  const { success, error: showError } = useToast();
+
   const [code, setCode] = React.useState('');
   const [error, setError] = React.useState('');
   const { countdown, restartCountdown } = useCountdown(RESEND_CODE_INTERVAL_SECONDS);
 
+  const validateForm = () => {
+    if (!code) {
+      setError('Verification code is required');
+      return false;
+    }
+
+    if (code.length < 6) {
+      setError('Code must be at least 6 characters');
+      return false;
+    }
+
+    setError('');
+    return true;
+  };
+
   async function onSubmit() {
+    if (!validateForm()) {
+      showError('Validation Error', 'Please enter a valid verification code.');
+      return;
+    }
+
     if (!isLoaded) return;
 
     try {
-      // Use the code the user provided to attempt verification
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code,
       });
 
-      // If verification was completed, set the session to active
-      // and redirect the user
       if (signUpAttempt.status === 'complete') {
         await setActive({ session: signUpAttempt.createdSessionId });
+        success('Email Verified', 'Your account has been created successfully.');
         return;
       }
-      // TODO: Handle other statuses
-      // If the status is not complete, check why. User may need to
-      // complete further steps.
+
       console.error(JSON.stringify(signUpAttempt, null, 2));
     } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
         setError(err.message);
+        showError('Verification Failed', err.message);
         return;
       }
       console.error(JSON.stringify(err, null, 2));
+      showError('Error', 'An unexpected error occurred. Please try again.');
     }
   }
 
@@ -60,13 +79,15 @@ export function VerifyEmailForm() {
     try {
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       restartCountdown();
+      success('Code Resent', 'A new verification code has been sent to your email.');
     } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
         setError(err.message);
+        showError('Resend Failed', err.message);
         return;
       }
       console.error(JSON.stringify(err, null, 2));
+      showError('Error', 'An unexpected error occurred. Please try again.');
     }
   }
 
@@ -81,32 +102,34 @@ export function VerifyEmailForm() {
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
-            <View className="gap-1.5">
-              <Label htmlFor="code">Verification code</Label>
-              <Input
-                id="code"
-                autoCapitalize="none"
+            <GroupedInput>
+              <GroupedInputItem
+                label="Code"
+                placeholder="123456"
+                icon={Hash}
+                value={code}
                 onChangeText={setCode}
-                returnKeyType="send"
+                error={error}
                 keyboardType="numeric"
                 autoComplete="sms-otp"
                 textContentType="oneTimeCode"
+                autoCapitalize="none"
+                returnKeyType="send"
                 onSubmitEditing={onSubmit}
               />
-              {!error ? null : (
-                <Text className="text-sm font-medium text-destructive">{error}</Text>
-              )}
-              <Button variant="link" size="sm" disabled={countdown > 0} onPress={onResendCode}>
-                <Text className="text-center text-xs">
-                  Didn&apos;t receive the code? Resend{' '}
-                  {countdown > 0 ? (
-                    <Text className="text-xs" style={TABULAR_NUMBERS_STYLE}>
-                      ({countdown})
-                    </Text>
-                  ) : null}
-                </Text>
-              </Button>
-            </View>
+            </GroupedInput>
+
+            <Button variant="link" size="sm" disabled={countdown > 0} onPress={onResendCode}>
+              <Text className="text-center text-xs">
+                Didn&apos;t receive the code? Resend{' '}
+                {countdown > 0 ? (
+                  <Text className="text-xs" style={TABULAR_NUMBERS_STYLE}>
+                    ({countdown})
+                  </Text>
+                ) : null}
+              </Text>
+            </Button>
+
             <View className="gap-3">
               <Button className="w-full" onPress={onSubmit}>
                 <Text>Continue</Text>

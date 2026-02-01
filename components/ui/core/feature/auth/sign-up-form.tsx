@@ -1,122 +1,116 @@
 import { SocialConnections } from '@/components/ui/core/feature/auth/social-connections';
 import { Button } from '@/components/ui/fragments/shadcn-ui/button';
+ 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/fragments/shadcn-ui/card';
-import { Input } from '@/components/ui/fragments/shadcn-ui/input';
-import { Label } from '@/components/ui/fragments/shadcn-ui/label';
-import { Separator } from '@/components/ui/fragments/shadcn-ui/separator';
+  GroupedInput,
+  GroupedInputItem,
+} from '@/components/ui/fragments/custom-ui/form/input-form';
+ 
 import { Text } from '@/components/ui/fragments/shadcn-ui/text';
+import { useToast } from '@/components/ui/fragments/shadcn-ui/toast';
 import { useSignUp } from '@clerk/clerk-expo';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
+import { Lock, Mail } from 'lucide-react-native';
 import * as React from 'react';
 import { TextInput, View } from 'react-native';
+import { Link } from '@/components/ui/fragments/shadcn-ui/link';
+import { useFormValidation, validationRules } from '@/hooks/Useformvalidation';
 
 export function SignUpForm() {
   const { signUp, isLoaded } = useSignUp();
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const passwordInputRef = React.useRef<TextInput>(null);
-  const [error, setError] = React.useState<{ email?: string; password?: string }>({});
+  const { success, error: showError } = useToast();
 
-  async function onSubmit() {
-    if (!isLoaded) return;
+  const emailRef = React.useRef<TextInput>(null!);
+  const passwordRef = React.useRef<TextInput>(null!);
 
-    // Start sign-up process using email and password provided
-    try {
-      await signUp.create({
-        emailAddress: email,
-        password,
-      });
+  const {
+    formData,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    registerField,
+    setFieldError,
+  } = useFormValidation({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    onSubmit: async (values) => {
+      if (!isLoaded) return;
 
-      // Send user an email with verification code
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      try {
+        await signUp.create({
+          emailAddress: values.email,
+          password: values.password,
+        });
 
-      router.push(`/(auth)/sign-up/verify-email?email=${email}`);
-    } catch (err) {
-      // See https://go.clerk.com/mRUDrIe for more info on error handling
-      if (err instanceof Error) {
-        const isEmailMessage =
-          err.message.toLowerCase().includes('identifier') ||
-          err.message.toLowerCase().includes('email');
-        setError(isEmailMessage ? { email: err.message } : { password: err.message });
-        return;
+        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+
+        success('Verification Sent', 'Please check your email for the verification code.');
+        router.push(`/(auth)/sign-up/verify-email?email=${values.email}`);
+      } catch (err) {
+        if (err instanceof Error) {
+          const isEmailMessage =
+            err.message.toLowerCase().includes('identifier') ||
+            err.message.toLowerCase().includes('email');
+
+          if (isEmailMessage) {
+            setFieldError('email', err.message);
+          } else {
+            setFieldError('password', err.message);
+          }
+          showError('Sign Up Failed', err.message);
+          return;
+        }
+        console.error(JSON.stringify(err, null, 2));
+        showError('Error', 'An unexpected error occurred. Please try again.');
       }
-      console.error(JSON.stringify(err, null, 2));
-    }
-  }
+    },
+  });
 
-  function onEmailSubmitEditing() {
-    passwordInputRef.current?.focus();
-  }
+  React.useEffect(() => {
+    registerField({ name: 'email', rules: validationRules.email, ref: emailRef });
+    registerField({ name: 'password', rules: validationRules.password, ref: passwordRef });
+  }, [registerField]);
 
   return (
-    <View className="gap-6">
-      <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
-        <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">Create your account</CardTitle>
-          <CardDescription className="text-center sm:text-left">
-            Welcome! Please fill in the details to get started.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="gap-6">
-          <View className="gap-6">
-            <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="m@example.com"
-                keyboardType="email-address"
-                autoComplete="email"
-                autoCapitalize="none"
-                onChangeText={setEmail}
-                onSubmitEditing={onEmailSubmitEditing}
-                returnKeyType="next"
-                submitBehavior="submit"
-              />
-              {error.email ? (
-                <Text className="text-sm font-medium text-destructive">{error.email}</Text>
-              ) : null}
-            </View>
-            <View className="gap-1.5">
-              <View className="flex-row items-center">
-                <Label htmlFor="password">Password</Label>
-              </View>
-              <Input
-                ref={passwordInputRef}
-                id="password"
-                placeholder="******"
-                secureTextEntry
-                onChangeText={setPassword}
-                returnKeyType="send"
-                onSubmitEditing={onSubmit}
-              />
-              {error.password ? (
-                <Text className="text-sm font-medium text-destructive">{error.password}</Text>
-              ) : null}
-            </View>
-            <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
-            </Button>
-          </View>
-          <Text className="text-center text-sm">
-            Already have an account?{' '}
-            <Link href="/(auth)/sign-in" dismissTo className="text-sm underline underline-offset-4">
-              Sign in
-            </Link>
-          </Text>
-          <View className="flex-row items-center">
-            <Separator className="flex-1" />
-            <Text className="px-4 text-sm text-muted-foreground">or</Text>
-            <Separator className="flex-1" />
-          </View>
-          <SocialConnections />
-        </CardContent>
-      </Card>
-    </View>
+    <>
+      <GroupedInput>
+        <GroupedInputItem
+          ref={emailRef}
+          label="Email"
+          placeholder="m@example.com"
+          icon={Mail}
+          value={formData.email}
+          onChangeText={handleChange('email')}
+          onBlur={handleBlur('email')}
+          error={touched.email ? errors.email : undefined}
+          keyboardType="email-address"
+          autoComplete="email"
+          autoCapitalize="none"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+        />
+        <GroupedInputItem
+          ref={passwordRef}
+          label="Password"
+          placeholder="••••••••"
+          icon={Lock}
+          value={formData.password}
+          onChangeText={handleChange('password')}
+          onBlur={handleBlur('password')}
+          error={touched.password ? errors.password : undefined}
+          secureTextEntry
+          returnKeyType="send"
+          onSubmitEditing={handleSubmit}
+        />
+      </GroupedInput>
+
+      <Button className="w-full" onPress={handleSubmit}>
+        <Text>Continue</Text>
+      </Button>
+    </>
   );
 }

@@ -1,28 +1,19 @@
-import { Platform, View, ColorValue, ImageSourcePropType, DynamicColorIOS } from 'react-native';
+import { Platform, ColorValue, ImageSourcePropType, DynamicColorIOS } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useColorScheme } from 'nativewind';
 import { UserMenu } from '@/components/ui/core/feature/auth/user-menu';
-import { Link, Stack, Tabs } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/Feather';
-import { MoonStarIcon, XIcon, SunIcon, House, Settings, Book } from 'lucide-react-native';
-import { NAV_THEME, THEME } from '@/lib/theme';
-import {
-  Badge,
-  Label,
-  NativeTabs,
-  VectorIcon,
-  Icon as TabIcon,
-} from 'expo-router/unstable-native-tabs';
+import { Stack } from 'expo-router';
+import { MoonStarIcon, SunIcon } from 'lucide-react-native';
+import { THEME } from '@/lib/theme';
+import { Label, NativeTabs, VectorIcon, Icon as TabIcon } from 'expo-router/unstable-native-tabs';
 
 import { Button } from '@/components/ui/fragments/shadcn-ui/button';
 import { Icon } from '@/components/ui/fragments/shadcn-ui/icon';
+import { View } from '@/components/ui/fragments/shadcn-ui/view';
 
-import React from 'react';
-
-import { theme } from '../../theme';
-
+import React, { useMemo } from 'react';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
-import useThemeColor from '@/components/Themed';
+import theme from '@/theme';
 
 type VectorIconFamily = {
   getImageSource: (name: string, size: number, color: ColorValue) => Promise<ImageSourcePropType>;
@@ -38,46 +29,38 @@ const SCREEN_OPTIONS = {
     </View>
   ),
 };
+
 export default function TabsLayout() {
   const { colorScheme } = useColorScheme();
-  // const navTheme = NAV_THEME[colorScheme ?? 'light'];
 
-  // const bookmarks = useBookmarkStore((state) => state.bookmarks);
-  // const hasBookmarks = bookmarks.length > 0;
-  const tintColor = useThemeColor({ light: THEME.light.primary, dark: THEME.dark.primary });
-  const backgroundColor = useThemeColor({
-    light: THEME.light.background,
-    dark: THEME.dark.background,
-  });
-  const backgroundColorIndicator = useThemeColor({
-    light: THEME.light.mutedForeground,
-    dark: THEME.dark.mutedForeground,
-  });
-  const inactiveTintColor = useThemeColor({
-    light: THEME.light.mutedForeground,
-    dark: THEME.dark.mutedForeground,
-  });
+  /**
+   * ✅ FIXED: Direct THEME access tanpa useThemeColor
+   * Ini lebih clean dan proper react to theme changes
+   */
+  const currentTheme = colorScheme === 'dark' ? 'dark' : 'light';
+  const tintColor = THEME[currentTheme].primary;
+  const backgroundColor = THEME[currentTheme].background;
+  const foreground = THEME[currentTheme].foreground;
+  const backgroundColorIndicator = THEME[currentTheme].muted;
+  const inactiveTintColor = THEME[currentTheme].mutedForeground;
 
-  const labelSelectedStyle = Platform.OS === 'ios' ? { color: tintColor } : { color: tintColor };
+  const labelSelectedStyle = Platform.OS === 'ios' ? { color: tintColor } : { color: foreground };
 
-  // Native (iOS/Android) — use NativeTabs
+  const nativeLabelStyle = useMemo(() => {
+    const color =
+      Platform.OS === 'ios' && isLiquidGlassAvailable()
+        ? DynamicColorIOS({ light: theme.colorBlack, dark: theme.colorWhite })
+        : inactiveTintColor;
+    return { fontWeight: '800', fontSize: 15, color } as any;
+  }, [inactiveTintColor]);
+
   return (
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
       <NativeTabs
         backgroundColor={backgroundColor}
         badgeBackgroundColor={tintColor}
-        labelStyle={{
-          fontWeight: '800',
-          fontSize: 15,
-          color:
-            Platform.OS === 'ios' && isLiquidGlassAvailable()
-              ? DynamicColorIOS({
-                  light: theme.colorBlack,
-                  dark: theme.colorWhite,
-                })
-              : inactiveTintColor,
-        }}
+        labelStyle={nativeLabelStyle}
         iconColor={
           Platform.OS === 'ios' && isLiquidGlassAvailable()
             ? DynamicColorIOS({
@@ -88,13 +71,15 @@ export default function TabsLayout() {
         }
         tintColor={
           Platform.OS === 'ios'
-            ? DynamicColorIOS({ light: THEME.light.primary, dark: THEME.dark.primary })
-            : inactiveTintColor
+            ? DynamicColorIOS({
+                light: THEME.light.primary,
+                dark: THEME.dark.primary,
+              })
+            : tintColor
         }
         labelVisibilityMode="labeled"
         indicatorColor={backgroundColorIndicator}
-        disableTransparentOnScrollEdge={true} // Used to prevent transparent background on iOS 18 and older
-      >
+        disableTransparentOnScrollEdge={true}>
         <NativeTabs.Trigger name="(home)/index">
           {Platform.select({
             ios: <TabIcon sf="house.fill" />,
@@ -107,6 +92,7 @@ export default function TabsLayout() {
           })}
           <Label selectedStyle={labelSelectedStyle}>Home</Label>
         </NativeTabs.Trigger>
+
         <NativeTabs.Trigger name="(news)/index">
           {Platform.select({
             ios: <TabIcon sf="newspaper.fill" />,
@@ -139,7 +125,8 @@ function ThemeToggle() {
 
   return (
     <Button onPress={toggleColorScheme} size="icon" variant="ghost" className="rounded-full">
-      <Icon as={THEME_ICONS[colorScheme ?? 'light']} className="size-6" />
+      {/* ✅ FIXED: Remove dark: class, let CSS variables handle it */}
+      <Icon as={THEME_ICONS[colorScheme ?? 'light']} className="size-6 text-foreground dark:text-primary-foreground" />
     </Button>
   );
 }

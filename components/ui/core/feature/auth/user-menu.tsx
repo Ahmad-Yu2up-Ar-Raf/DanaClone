@@ -7,11 +7,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/fragments/shadcn-ui/popover';
 import { Text } from '@/components/ui/fragments/shadcn-ui/text';
+import { View } from '@/components/ui/fragments/shadcn-ui/view';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import type { TriggerRef } from '@rn-primitives/popover';
 import { LogOutIcon, PlusIcon, SettingsIcon } from 'lucide-react-native';
 import * as React from 'react';
-import { View } from 'react-native';
+ 
 
 export function UserMenu() {
   const { user } = useUser();
@@ -30,8 +31,11 @@ export function UserMenu() {
           <UserAvatar />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" side="bottom" className="w-80 p-0">
-        <View className="gap-3 border-b border-border p-3">
+      <PopoverContent
+        align="end"
+        side="bottom"
+        className="w-80 bg-background p-0 backdrop-blur-md dark:border-border/20 dark:bg-foreground">
+        <View className="gap-3 border-b border-border/40 p-3">
           <View className="flex-row items-center gap-3">
             <UserAvatar className="size-10" />
             <View className="flex-1">
@@ -52,11 +56,17 @@ export function UserMenu() {
               onPress={() => {
                 // TODO: Navigate to account settings screen
               }}>
-              <Icon as={SettingsIcon} className="size-4" />
+              <Icon
+                as={SettingsIcon}
+                className="ext-foreground size-4 dark:text-primary-foreground"
+              />
               <Text>Manage Account</Text>
             </Button>
             <Button variant="outline" size="sm" className="flex-1" onPress={onSignOut}>
-              <Icon as={LogOutIcon} className="size-4" />
+              <Icon
+                as={LogOutIcon}
+                className="ext-foreground size-4 dark:text-primary-foreground"
+              />
               <Text>Sign Out</Text>
             </Button>
           </View>
@@ -70,7 +80,7 @@ export function UserMenu() {
           }}>
           <View className="size-10 items-center justify-center">
             <View className="size-7 items-center justify-center rounded-full border border-dashed border-border bg-muted/50">
-              <Icon as={PlusIcon} className="size-5" />
+              <Icon as={PlusIcon} className="text-foreground size-5 dark:text-primary-foreground" />
             </View>
           </View>
           <Text>Add account</Text>
