@@ -128,14 +128,24 @@ export function SearchBar({
     setIsFocused(false);
   };
   return (
-    <Button className={cn('w-full items-center bg-accent-foreground/20 px-3', containerClassName)}>
+    <Button
+      variant={'outline'}
+      className={cn(
+        'b h-9 w-full items-center rounded-lg border-2 border-primary/40 bg-primary-foreground px-1 shadow-lg outline-primary transition-all duration-300 ease-out',
+        containerClassName,
+        isFocused ? '' : 'border-border'
+      )}>
       {/* Left Icon */}
-      {leftIcon || <Icon as={Search} size={16} className={cn('text-accent', iconColor)} />}
+      {leftIcon || <Icon as={Search} size={16} className={cn('text-primary', iconColor)} />}
 
       {/* Text Input */}
       <Input
-        className="max-w-xs flex-1 bg-transparent px-2 text-sm text-accent placeholder:text-accent/70"
+        className={cn(
+          'max-w-xs bg-transparent px-1 text-sm text-accent-foreground transition-all duration-300 ease-out'
+        )}
         ref={inputRef}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         // style={[baseInputStyle, inputStyle]}
         placeholder={placeholder}
         value={displayValue}

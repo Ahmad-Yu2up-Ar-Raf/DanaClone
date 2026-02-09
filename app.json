@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Dana",
-    "slug": "Dana",
+    "name": " ",
+    "slug": " ",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/brand/app/icon.png",
@@ -15,7 +15,7 @@
     "splash": {
       "image": "./assets/images/brand/app/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#108bea"
     },
 
     "assetBundlePatterns": ["**/*"],
@@ -30,7 +30,7 @@
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/brand/app/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#108bea"
       },
    
       "userInterfaceStyle": "light"
@@ -50,7 +50,7 @@
         "expo-splash-screen",
         {
          
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#108bea",
           "image": "./assets/images/brand/app/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain"

@@ -12,17 +12,16 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import type { TriggerRef } from '@rn-primitives/popover';
 import { LogOutIcon, PlusIcon, SettingsIcon } from 'lucide-react-native';
 import * as React from 'react';
- 
 
 export function UserMenu() {
   const { user } = useUser();
   const { signOut } = useAuth();
-  const popoverTriggerRef = React.useRef<TriggerRef>(null);
 
   async function onSignOut() {
     popoverTriggerRef.current?.close();
     await signOut();
   }
+  const popoverTriggerRef = React.useRef<TriggerRef>(null);
 
   return (
     <Popover>
@@ -80,7 +79,7 @@ export function UserMenu() {
           }}>
           <View className="size-10 items-center justify-center">
             <View className="size-7 items-center justify-center rounded-full border border-dashed border-border bg-muted/50">
-              <Icon as={PlusIcon} className="text-foreground size-5 dark:text-primary-foreground" />
+              <Icon as={PlusIcon} className="size-5 text-foreground dark:text-primary-foreground" />
             </View>
           </View>
           <Text>Add account</Text>

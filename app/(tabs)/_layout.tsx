@@ -180,6 +180,7 @@ export default function TabsLayout() {
     () => ({
       paddingTop: 8,
       height: 70,
+
       backgroundColor,
       ...Platform.select({
         android: { elevation: 8 },
@@ -195,75 +196,89 @@ export default function TabsLayout() {
   );
 
   // ✅ Hide tabs on activity route
-  const shouldShowTabs = !pathname.includes('/(activity)');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const shouldShowTabs = !isKeyboardVisible;
+
+  // ✅ Listen to keyboard events
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardVisible(true); // ✅ Hide background
+    });
+
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardVisible(false); // ✅ Show background
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   return (
     <>
       <Stack.Screen key={'header'} options={{ headerShown: false }} />
 
-      {shouldShowTabs ? (
-        <View style={{ flex: 1 }}>
-          <NativeTabs
-            {...({
-              backgroundColor,
-              badgeBackgroundColor: tintColor,
-              labelStyle: nativeLabelStyle,
-              iconColor: inactiveTintColor,
-              tintColor,
-              labelVisibilityMode: 'labeled',
-              indicatorColor: THEME.light.muted,
-              disableTransparentOnScrollEdge: true,
-              tabBarStyle: tabBarConfig,
-            } as NativeTabsConfig & { tabBarStyle: typeof tabBarConfig })}>
-            <NativeTabs.Trigger name="(home)">
-              <TabIcon
-                src={<VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="home" />}
-                selectedColor={tintColor}
-              />
-              <Label selectedStyle={labelSelectedStyle}>Beranda</Label>
-            </NativeTabs.Trigger>
+      <View style={{ flex: 1 }}>
+        <NativeTabs
+          {...({
+            backgroundColor,
+            badgeBackgroundColor: tintColor,
+            labelStyle: nativeLabelStyle,
+            iconColor: inactiveTintColor,
+            tintColor,
+            labelVisibilityMode: 'labeled',
+            indicatorColor: THEME.light.muted,
+            disableTransparentOnScrollEdge: true,
+            tabBarStyle: tabBarConfig,
+          } as NativeTabsConfig & { tabBarStyle: typeof tabBarConfig })}>
+          <NativeTabs.Trigger name="(home)">
+            <TabIcon
+              src={<VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="home" />}
+              selectedColor={tintColor}
+            />
+            <Label selectedStyle={labelSelectedStyle}>Beranda</Label>
+          </NativeTabs.Trigger>
 
-            <NativeTabs.Trigger name="(activity)">
-              <TabIcon
-                src={
-                  <VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="history" />
-                }
-                selectedColor={tintColor}
-              />
-              <Label selectedStyle={labelSelectedStyle}>Aktifitas</Label>
-            </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="(activity)">
+            <TabIcon
+              src={
+                <VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="history" />
+              }
+              selectedColor={tintColor}
+            />
+            <Label selectedStyle={labelSelectedStyle}>Aktifitas</Label>
+          </NativeTabs.Trigger>
 
-            <NativeTabs.Trigger name="(pay)">
-              <Label hidden>.</Label>
-            </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="(pay)">
+            <Label hidden>.</Label>
+          </NativeTabs.Trigger>
 
-            <NativeTabs.Trigger name="(wallet)">
-              <TabIcon
-                src={
-                  <VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="wallet" />
-                }
-                selectedColor={tintColor}
-              />
-              <Label selectedStyle={labelSelectedStyle}>Dompet</Label>
-            </NativeTabs.Trigger>
+          <NativeTabs.Trigger name="(wallet)">
+            <TabIcon
+              src={<VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="wallet" />}
+              selectedColor={tintColor}
+            />
+            <Label selectedStyle={labelSelectedStyle}>Dompet</Label>
+          </NativeTabs.Trigger>
 
-            <NativeTabs.Trigger name="(profile)">
-              <TabIcon
-                src={
-                  <VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="account" />
-                }
-                selectedColor={tintColor}
-              />
-              <Label selectedStyle={labelSelectedStyle}>Saya</Label>
-            </NativeTabs.Trigger>
-          </NativeTabs>
+          <NativeTabs.Trigger name="(profile)">
+            <TabIcon
+              src={
+                <VectorIcon family={MaterialCommunityIcons as VectorIconFamily} name="account" />
+              }
+              selectedColor={tintColor}
+            />
+            <Label selectedStyle={labelSelectedStyle}>Saya</Label>
+          </NativeTabs.Trigger>
+        </NativeTabs>
 
-          {/* ✅ Floating button with proper keyboard handling */}
-          <FloatingPayButton />
-        </View>
-      ) : (
-        <View style={{ flex: 1 }} />
-      )}
+        {/* ✅ Floating button with proper keyboard handling */}
+        <FloatingPayButton />
+      </View>
     </>
   );
 }

@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/fragments/shadcn-ui/icon';
 import { CircleFadingArrowUp, HandCoins, Plus, Ticket, Wallet } from 'lucide-react-native';
 import MenuCard from '@/components/ui/fragments/custom-ui/card/menu-card';
 
-import { Dimensions, ScrollView, StyleSheet } from 'react-native';
+import { Dimensions, Keyboard, Platform, ScrollView, StyleSheet } from 'react-native';
 
 import HistoryCard from '@/components/ui/fragments/custom-ui/card/history-card';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ import Carousel from 'react-native-reanimated-carousel';
 import { Image } from '@/components/ui/fragments/shadcn-ui/image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 
 export const STATUS_DUMMY: componentPropsStatusCard[] = [
   {
@@ -194,28 +195,50 @@ export default function Screen() {
 }
 
 // ✅ FIXED WRAPPER - Background Always at Bottom of Viewport
+// components/Wrapper.tsx atau di index.tsx - SIMPLE VERSION
+
 export function Wrapper({
   children,
+  showBackground = true,
   className,
   edges = ['top', 'bottom'],
 }: {
   children: React.ReactNode;
   className?: string;
+  showBackground?: boolean;
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
 }) {
   const width = Dimensions.get('window').width;
   const height = Dimensions.get('window').height;
   const insets = useSafeAreaInsets();
 
-  // ✅ Calculate background height
-  const backgroundHeight = height / 2.98;
+  // ✅ Track keyboard visibility
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // ✅ Calculate tab bar height (standard height + safe area)
-  const tabBarHeight = 84 + insets.bottom;
+  // ✅ Listen to keyboard events
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardVisible(true); // ✅ Hide background
+    });
+
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardVisible(false); // ✅ Show background
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  const backgroundHeight = height / 2.98;
+  const tabBarHeight = insets.bottom;
 
   return (
     <SafeAreaView edges={edges} style={styles.container}>
-      {/* ✅ Content in ScrollView */}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
@@ -223,32 +246,31 @@ export function Wrapper({
         showsVerticalScrollIndicator={false}>
         <View className={cn('flex h-full flex-1 flex-col gap-5', className)}>{children}</View>
 
-        {/* ✅ Spacer to prevent content from being hidden behind background */}
-        <View style={{ height: backgroundHeight / 1.5  }} />
-        <View
-          style={[
-            styles.backgroundContainer,
-            {
-              bottom: 0.1 * tabBarHeight, // ✅ Position above tab bar
-              height: backgroundHeight,
-              width: width,
-            },
-          ]}
-          pointerEvents="none">
-          {' '}
-          {/* ✅ Prevent blocking touches */}
-          <Image
-            source={require('@/assets/images/background/background-1.png')}
-            width={width}
-            height={backgroundHeight}
-            contentFit="contain"
-            showLoadingIndicator={false}
-            showErrorFallback={false}
-          />
-        </View>
-      </ScrollView>
+        <View style={{ height: backgroundHeight / 1.5 }} />
 
-      {/* ✅ FIXED BACKGROUND - Always at viewport bottom, above tabs */}
+        {/* ✅ CONDITIONAL RENDERING - Hide when keyboard visible */}
+        {!isKeyboardVisible && showBackground && (
+          <View
+            style={[
+              styles.backgroundContainer,
+              {
+                bottom: 0,
+                height: backgroundHeight,
+                width: width,
+              },
+            ]}
+            pointerEvents="none">
+            <Image
+              source={require('@/assets/images/background/background-1.png')}
+              width={width}
+              height={backgroundHeight}
+              contentFit="contain"
+              showLoadingIndicator={false}
+              showErrorFallback={false}
+            />
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -258,12 +280,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 64, // ✅ Extra padding at bottom
+    paddingBottom: 64,
   },
   backgroundContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
-    zIndex: -1, // ✅ Behind content but visible
+    zIndex: -1,
   },
 });

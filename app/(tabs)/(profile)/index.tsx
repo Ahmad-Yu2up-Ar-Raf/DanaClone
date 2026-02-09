@@ -13,6 +13,11 @@ const Index = () => {
         <BelanceCard />
         <FeatureCard />
       </View>
+      <Text
+        className="m-auto mt-10 text-center text-sm text-muted-foreground"
+        style={{ maxWidth: 360 }}>
+        Versi 2.0.0
+      </Text>
     </Wrapper>
   );
 };

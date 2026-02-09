@@ -77,7 +77,7 @@ export function VerifyEmailForm() {
       </Button>
 
       {/* Action buttons */}
-      <View className="gap-3 sr-only">
+      <View className="gap-3">
         <Button
           disabled={isSubmitting || code.length !== 6}
           className="w-full gap-2"

@@ -194,7 +194,7 @@ export const GroupedInputItem = forwardRef<TextInputB, GroupedInputItemProps>(
     const { height } = useGradualAnimation();
 
     return (
-      <Button
+      <Pressable
         onPress={() => ref && 'current' in ref && ref.current?.focus()}
         disabled={disabled}
         className={cn(disabled ? 'opacity-60' : 'opacity-100')}>
@@ -286,7 +286,7 @@ export const GroupedInputItem = forwardRef<TextInputB, GroupedInputItemProps>(
 
           {error && showError && <Text className="mt-1 text-sm text-destructive">* {error}</Text>}
         </View>
-      </Button>
+      </Pressable>
     );
   }
 );

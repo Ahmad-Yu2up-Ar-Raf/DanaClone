@@ -11,6 +11,7 @@ import ActivityCard from '@/components/ui/fragments/custom-ui/card/activity-card
 import { Wrapper } from '../(home)';
 import FilterCard from '@/components/ui/fragments/custom-ui/card/filter-card';
 import { Text } from '@/components/ui/fragments/shadcn-ui/text';
+import NotFound from '@/components/ui/fragments/custom-ui/card/not-found-card';
 
 export default function Screen() {
   // ✅ State untuk search query dan filtered data
@@ -42,11 +43,11 @@ export default function Screen() {
   }, []);
 
   return (
-    <Wrapper edges={['bottom']} className="gap-0">
+    <Wrapper showBackground={searchQuery.length === 0} edges={['bottom']} className="gap-0">
       {/* ✅ Pass search handlers ke FilterCard */}
       <FilterCard onSearch={handleSearch} onClear={handleClearSearch} searchQuery={searchQuery} />
 
-      <View className="flex flex-col justify-between gap-0  px-2.5 py-1">
+      <View className="flex flex-col justify-between gap-0 px-2.5 py-1">
         {/* ✅ Show filtered data */}
         {filteredData.length > 0 ? (
           filteredData.map((item, index) => (
@@ -62,11 +63,10 @@ export default function Screen() {
           ))
         ) : (
           // ✅ Empty state when no results
-          <View className="items-center justify-center py-20">
-            <Text className="text-center text-sm text-muted-foreground">
-              Tidak ada aktivitas ditemukan untuk "{searchQuery}"
-            </Text>
-          </View>
+          <NotFound
+            title="  Tidak Ditemukan "
+            deskripsi={`Tidak ada aktivitas ditemukan untuk "${searchQuery}"`}
+          />
         )}
       </View>
     </Wrapper>

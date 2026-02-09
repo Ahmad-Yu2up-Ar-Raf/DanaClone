@@ -11,13 +11,26 @@ interface FilterCardProps {
   onSearch?: (query: string) => void;
   onClear?: () => void;
   searchQuery?: string;
+  placeholder?: string;
 }
 
-export default function FilterCard({ onSearch, onClear, searchQuery = '' }: FilterCardProps) {
+export default function FilterCard({
+  onSearch,
+  onClear,
+  searchQuery = '',
+  placeholder = 'Cari Aktifitas...',
+}: FilterCardProps) {
   return (
-    <View style={{ backgroundColor: THEME.light.primary }} className="w-full gap-3">
-      <View className="m-auto w-full max-w-sm flex-row items-end justify-between gap-5 px-1.5 pb-4 pt-0.5">
-        <SearchBarWithFilter onSearch={onSearch} onClear={onClear} value={searchQuery} />
+    <View
+      style={{ backgroundColor: THEME.light.primary }}
+      className="mb-5 h-8 w-full gap-3  rounded-b-full">
+      <View className="absolute -bottom-8 w-full flex-row justify-center gap-5 px-5 pb-4 pt-0.5">
+        <SearchBarWithFilter
+          onSearch={onSearch}
+          onClear={onClear}
+          value={searchQuery}
+          placeholder={placeholder}
+        />
       </View>
     </View>
   );
@@ -27,9 +40,10 @@ interface SearchBarWithFilterProps {
   onSearch?: (query: string) => void;
   onClear?: () => void;
   value?: string;
+  placeholder?: string;
 }
 
-function SearchBarWithFilter({ onSearch, onClear, value }: SearchBarWithFilterProps) {
+function SearchBarWithFilter({ onSearch, onClear, value, placeholder }: SearchBarWithFilterProps) {
   const [internalValue, setInternalValue] = React.useState(value || '');
 
   // ✅ Sync internal value with prop
@@ -54,8 +68,9 @@ function SearchBarWithFilter({ onSearch, onClear, value }: SearchBarWithFilterPr
 
   return (
     <SearchBar
-      placeholder="Cari aktivitas..."
+      placeholder={placeholder}
       value={internalValue}
+      containerClassName=" px-6     "
       rightIcon={<Icon as={Filter} size={16} className="text-accent/50" />}
       onChangeText={handleChange}
       onSearch={handleSearch}

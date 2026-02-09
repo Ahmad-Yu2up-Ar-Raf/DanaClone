@@ -14,6 +14,7 @@ import { Icon } from '../../shadcn-ui/icon';
 import { Copy, LucideIcon, Plus } from 'lucide-react-native';
 import { Image } from 'react-native';
 import { cn } from '@/lib/utils';
+import { useToast } from '../../shadcn-ui/toast';
 
 export type componentPropsStatusCard = {
   className?: string;
@@ -65,6 +66,7 @@ const StatusCard = ({
   Logo = require('@/assets/images/brand/app/logo-white.png'),
   ...props
 }: componentPropsStatusCard) => {
+  const toast = useToast();
   return (
     <Card
       className={cn(
@@ -102,7 +104,9 @@ const StatusCard = ({
 
         {actionButton && (
           <Button
-            onPress={actionFunction}
+            onPress={() => {
+              toast.success('Sukses!', 'Top up berhasil dilakukan');
+            }}
             size={'sm'}
             variant="secondary"
             className={cn(

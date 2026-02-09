@@ -13,6 +13,8 @@ import { Button, buttonTextVariants, buttonVariants } from '../../shadcn-ui/butt
 import {
   ChevronRight,
   Lock,
+  LogOut,
+  LogOutIcon,
   LucideIcon,
   Receipt,
   ScrollText,
@@ -29,6 +31,8 @@ import { Separator } from '../../shadcn-ui/separator';
 import { Icon } from '../../shadcn-ui/icon';
 import { Href, router } from 'expo-router';
 import { batasiHuruf } from '@/hooks/useWord';
+import { useAuth } from '@clerk/clerk-expo';
+import { useToast } from '../../shadcn-ui/toast';
 
 interface FeatureCardProps {
   label: string;
@@ -36,6 +40,7 @@ interface FeatureCardProps {
   href?: Href;
   Icon: LucideIcon;
   className?: string;
+  onpress?: () => void;
 }
 
 const FeatureLink: FeatureCardProps[] = [
@@ -69,6 +74,14 @@ const FeatureLink: FeatureCardProps[] = [
   },
 ];
 export default function FeatureCard() {
+  const { signOut } = useAuth();
+  const { success, error: showError } = useToast();
+
+  async function onSignOut() {
+    await signOut();
+    success('Berhasil  ', 'Anda telah keluar dari akun');
+  }
+
   return (
     <Card className="h-fit w-full max-w-sm gap-0 rounded-3xl bg-card pb-4 pt-6 text-primary-foreground shadow-sm">
       <CardHeader className="w-full flex-row items-center gap-3.5 rounded-2xl bg-card px-6 py-0">
@@ -92,9 +105,9 @@ export default function FeatureCard() {
             <>
               <Button
                 onPress={() => {
-                  if (item.href) {
-                    router.push(item.href ? item.href : '/(tabs)/(home)');
-                  }
+                  item.onpress
+                    ? item.onpress()
+                    : router.push(item.href ? item.href : '/(tabs)/(home)');
                 }}
                 key={item.label}
                 variant={'ghost'}
@@ -125,16 +138,38 @@ export default function FeatureCard() {
                 </View>
                 <Icon as={ChevronRight} size={20} />
               </Button>
-              {!isLastStep && (
-                <Separator
-                  key={index}
-                  orientation="horizontal"
-                  className="m-auto w-[19em] bg-border/60"
-                />
-              )}
+
+              <Separator
+                key={index}
+                orientation="horizontal"
+                className="m-auto w-[19em] bg-border/60"
+              />
             </>
           );
         })}
+        <Button
+          onPress={() => onSignOut()}
+          variant={'ghost'}
+          className={cn(
+            // buttonVariants({ variant: 'ghost' }),
+
+            'h-[4em] w-full flex-row justify-between px-7 py-4 active:bg-accent'
+          )}>
+          <View className="relative h-fit flex-row items-center gap-4">
+            <Icon
+              as={LogOut}
+              size={27}
+              className={cn('z-2 relative m-auto size-6 text-destructive')}
+            />
+
+            <View>
+              <Text variant={'h3'} className="text-base font-medium text-foreground/90">
+                Keluar Akun
+              </Text>
+            </View>
+          </View>
+          <Icon as={ChevronRight} size={20} />
+        </Button>
       </CardContent>
     </Card>
   );

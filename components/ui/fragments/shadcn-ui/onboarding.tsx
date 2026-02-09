@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    height: 80,
+    height: 90,
     flexDirection: 'row',
     paddingHorizontal: 24,
     paddingBottom: 50,

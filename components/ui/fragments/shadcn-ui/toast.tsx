@@ -337,7 +337,7 @@ export function ToastProvider({ children, maxToasts = MAX_TOASTS }: ToastProvide
     <ToastContext.Provider value={contextValue}>
       <GestureHandlerRootView className="flex-1">
         {children}
-        <View className="pointer-events-box-none absolute left-0 right-0 top-0 z-[1000]">
+        <View className="pointer-events-box-none absolute left-0 right-0 top-4 z-[1000]">
           {toasts.map((toast, index) => (
             <Toast
               key={toast.id}
